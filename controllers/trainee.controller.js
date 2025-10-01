@@ -3,6 +3,7 @@ const multer = require("multer");
 const fs = require("fs");
 const { sendSuccess, throwError, sendError, getFriendlyErrorMessage } = require("../utils/util");
 const { logSuccess, logError } = require("../utils/logs");
+const traineeService = require("../services/trainee.service");
 
 const OPENAI_KEY = process.env.OPENAI_KEY;
 const client = new OpenAI({ apiKey: OPENAI_KEY });
@@ -11,7 +12,7 @@ const cheaper_model = 'gpt-3.5-turbo-0125';
 const mid_model = 'gpt-4o-mini'
 const voice_recognition_model = 'whisper-1';
 
-const studentController = {
+const traineeController = {
     generateScript: async (req, res) => {
         try {
 
@@ -39,7 +40,7 @@ const studentController = {
                 throwError("Generating script is not successful", 400, true)
             };
             
-            logSuccess("Generated script successfully")
+            logSuccess("Generated script successfully");
             sendSuccess(res, 200, { message: "Generated script successfully", script });
 
         } catch (error) {
@@ -86,7 +87,6 @@ const studentController = {
     
           //extract text from analyzation result
           const analyzationResult = analyzeResponse.output_text;
-          console.log(analyzationResult);
     
           //get the JSON on received prompt
           let parsedResult;
@@ -109,7 +109,21 @@ const studentController = {
             logError(error.message);
             sendError(res, 500, getFriendlyErrorMessage(error));
         }
+      },
+
+      getHome: async (req, res) => {
+        try {
+          
+          const result = await traineeService.getHome(req.user.id);
+          logSuccess("Fetched trainee home successfully");
+          sendSuccess(res, 200, result);
+
+        } catch (error) {
+              logError(error.message);
+            const status = error.statusCode || 500;
+            sendError(res, status, getFriendlyErrorMessage(error));
+        }
       }
 }
 
-module.exports = studentController;
+module.exports = traineeController;

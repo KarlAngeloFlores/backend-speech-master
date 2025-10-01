@@ -37,6 +37,19 @@ const trainerController = {
             const status = error.statusCode || 500;
             sendError(res, status, getFriendlyErrorMessage(error));
         }
+    },
+
+    getHome: async (req, res) => {
+        try {
+
+            const result = await trainerService.getHome();
+            logSuccess(result.message);
+            sendSuccess(res, 200, result);
+        } catch (error) {
+            logError(error.message);
+            const status = error.statusCode || 500;
+            sendError(res, status, getFriendlyErrorMessage(error));
+        }
     }
 }
 

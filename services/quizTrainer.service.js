@@ -88,7 +88,7 @@ const quizTrainerService = {
         }
     },
 
-    getQuizResult: async (quiz_id) => {
+    getQuizResult: async (id) => {
         try {
             
             const [quiz_results] = await sequelize.query(`SELECT 
@@ -102,7 +102,7 @@ const quizTrainerService = {
             FROM user u
             LEFT JOIN quiz_score qs ON u.id = qs.user_id
             AND qs.quiz_id = ? 
-            WHERE u.role = 'trainee';`, { replacements: [quiz_id] });
+            WHERE u.role = 'trainee';`, { replacements: [id] });
 
             const quiz_info = await Quiz.findOne({ where: { id } });
 

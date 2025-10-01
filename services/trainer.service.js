@@ -1,5 +1,5 @@
 const { Op } = require("sequelize");
-const { User } = require("../models/associations");
+const { User, Quiz, QuizAttempt, Module } = require("../models/associations");
 const { throwError } = require("../utils/util");
 const sequelize = require("../config/db");
 
@@ -58,6 +58,41 @@ const trainerService = {
             return { message: "Trainee deleted successfully", data: id };
         } catch (error) {
             await transaction.rollback();
+            throw error;
+        }
+    },
+
+    getHome: async () => {
+        try {
+            
+            const quizCount = await Quiz.count();
+            const attemptCount = await QuizAttempt.count();
+            const modulesCount = await Module.count();
+            const traineesCount = await User.count({ where: { status: 'verified', role: 'trainee' } });
+
+            const [completion] = await sequelize.query(`SELECT 
+    q.id AS quiz_id,
+    q.title,
+    COUNT(DISTINCT qa.user_id) AS completed_attempts
+FROM quiz q
+LEFT JOIN quiz_attempt qa 
+    ON q.id = qa.quiz_id AND qa.status = 'completed'
+GROUP BY q.id, q.title;`);
+
+
+
+            return {
+                message: "Fetched home data successfully",
+                stats: {
+                totalTrainees: traineesCount,
+                totalQuizzes: quizCount,
+                totalAttempts: attemptCount, 
+                totalModules: modulesCount
+                },
+                completion
+            }
+
+        } catch (error) {
             throw error;
         }
     }

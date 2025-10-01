@@ -11,6 +11,10 @@ const Module = sequelize.define("Module", {
     type: DataTypes.STRING(255),
     allowNull: false,
   },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: false
+  },
   created_by: {
     type: DataTypes.INTEGER,
     allowNull: false,

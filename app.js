@@ -25,6 +25,9 @@ app.use("/trainee/quizzes", quiztraineeRoutes);
 const openaiRoutes = require("./routes/openai.routes");
 app.use("/trainee/openai", openaiRoutes);
 
+const traineeRoutes = require("./routes/trainee.routes");
+app.use("/trainee", traineeRoutes);
+
 const trainerRoutes = require("./routes/trainer.routes");
 app.use("/trainer", trainerRoutes);
 

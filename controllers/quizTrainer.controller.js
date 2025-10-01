@@ -1,5 +1,5 @@
 const quizTrainerService = require("../services/quizTrainer.service");
-const { logSuccess, logError } = require("../utils/logs");
+const { logSuccess, logError, logInfo } = require("../utils/logs");
 const { sendSuccess, sendError, getFriendlyErrorMessage } = require("../utils/util");
 
 const quizTrainerController = {
@@ -51,7 +51,7 @@ const quizTrainerController = {
 
     getQuizResult: async (req, res) => {
         try {
-
+            logInfo(req.params);
             const { id } = req.params;
 
             const result = await quizTrainerService.getQuizResult(id);

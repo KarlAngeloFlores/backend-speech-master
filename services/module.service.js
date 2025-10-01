@@ -1,7 +1,9 @@
-const { Module, ModuleContent } = require("../models/associations");
+const { Module, ModuleContent, User } = require("../models/associations");
 const sequelize = require("../config/db");
 const { throwError } = require("../utils/util"); // adjust path
 const { logInfo } = require("../utils/logs");
+const emailService = require("./email.service");
+const sgMail = require("@sendgrid/mail");
 
 const moduleService = {
   /**
@@ -44,19 +46,68 @@ const moduleService = {
     }
   },
 
-  createModule: async (title, created_by) => {
-    try {
-      const module = await Module.create({ title, created_by });
-      return {
-        message: "Module created successfully",
-        data: module,
-      };
-    } catch (error) {
-      throw error;
-    }
-  },
+createModule: async (title, description, created_by) => {
+  try {
+    // 1. Create module
+    const module = await Module.create({ title, description, created_by });
 
-  updateModule: async (id, title) => {
+    // 2. Get all verified trainees
+    const users = await User.findAll({
+      where: { status: "verified", role: "trainee" },
+      attributes: ["email"],
+    });
+
+    if (users && users.length > 0) {
+      const emails = users.map((u) => ({ email: u.email })); //fix
+
+      const subject = "📘 New Training Module Available";
+      const message = `
+        A new training module has been created: <strong>${module.title}</strong>.<br><br>
+        ${module.description || "No description provided."}<br><br>
+        Please log in to your account to view and start the module.
+      `;
+
+      // 3. Bulk send (all in BCC)
+      await sgMail.send({
+        from: process.env.EMAIL,
+        personalizations: [
+          {
+            to: process.env.EMAIL, // 👈 required "to" (even if unused)
+            bcc: emails,           // 👈 SendGrid expects objects here
+          },
+        ],
+        subject,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 24px; border-radius: 12px; background: #ffffff; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+            <h2 style="color: #2c3e50; text-align: center; margin-bottom: 20px;">
+              ${subject}
+            </h2>
+            <p style="font-size: 16px; color: #555; line-height: 1.6; margin: 0 0 20px 0;">
+              ${message}
+            </p>
+            <hr style="margin: 24px 0; border: none; border-top: 1px solid #eee;">
+            <p style="font-size: 14px; color: #888; text-align: center; margin: 0 0 6px 0;">
+              This is an automated email. Please do not reply.
+            </p>
+            <p style="font-size: 12px; color: #aaa; text-align: center; margin: 0;">
+              © ${new Date().getFullYear()} Projexlify. All rights reserved.
+            </p>
+          </div>
+        `,
+      });
+    }
+
+    return {
+      message: "Module created successfully",
+      data: module,
+    };
+  } catch (error) {
+    console.error("SendGrid error:", error.response?.body || error.message);
+    throw error;
+  }
+},
+
+  updateModule: async (id, title, description) => {
     const transaction = await sequelize.transaction();
     try {
       const module = await Module.findOne({ where: { id }, transaction });
@@ -65,7 +116,7 @@ const moduleService = {
         throwError("Module not found", 404, true);
       }
 
-      await module.update({ title }, { transaction });
+      await module.update({ title, description }, { transaction });
       await transaction.commit();
 
       return {

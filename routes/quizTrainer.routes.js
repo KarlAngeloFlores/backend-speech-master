@@ -5,7 +5,7 @@ const checkRole = require("../middlewares/checkRole");
 
 const router = express.Router();
 
-router.get("/result/:id", auth, checkRole("trainer"), quizTrainerController.getAllQuizzes)
+router.get("/result/:id", auth, checkRole("trainer"), quizTrainerController.getQuizResult)
 router.get("/", auth, checkRole("trainer"), quizTrainerController.getAllQuizzes);
 router.post("/", auth, checkRole("trainer"), quizTrainerController.createQuiz);
 router.delete("/:id", auth, checkRole("trainer"), quizTrainerController.deleteQuiz);
