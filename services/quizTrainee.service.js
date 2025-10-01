@@ -83,11 +83,24 @@ WHERE qa.id IS NULL
       //     is_taken: true,
       //   };
       // }
+
+      
+
       const status = existingStatus?.status || null;
       // logInfo(existingStatus)
 
+      let score = null;
+      if(status && status === "pending") {
+        const scoreResult = await QuizScore.findOne({ where: { quiz_id, user_id }, attributes: ['score'] });
+        score = scoreResult.score;
+      }
+
       const quiz_info = await Quiz.findOne({ where: { id: quiz_id } });
       const words = await QuizQuestion.findAll({ where: { quiz_id } });
+
+      if(!quiz_info || !words) {
+        throwError("Quiz not found", 404, true);  
+      };
 
       return {
         // is_taken: false,
@@ -95,6 +108,7 @@ WHERE qa.id IS NULL
         quiz_info,
         words,
         status,
+        score
       };
     } catch (error) {
       throw error;
