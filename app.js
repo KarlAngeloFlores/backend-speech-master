@@ -4,7 +4,7 @@ const cors = require('cors');
 const sequelize = require('./config/db');
 const app = express();
 
-const allowedOrigins = ['http://localhost:5173', 'http://192.168.1.9:5173'];
+const allowedOrigins = ['http://localhost:5173', 'http://192.168.1.9:5173', 'https://speechmaster.netlify.app'];
 
 app.use(cors({
     origin: allowedOrigins
