@@ -116,7 +116,22 @@ const authController = {
             const status = 500;
             sendError(res, status, getFriendlyErrorMessage(error));
         }
-    }
+    },
+
+    resendVerificationCode: async (req, res) => {
+        try {
+            
+            const { email, purpose } = req.body;
+            
+            const result = await authService.resendVerificationCode(email, purpose);
+            logSuccess(result.message);
+            sendSuccess(res, 200, result);
+
+        } catch (error) {
+            logError(error)
+            sendError(res, 500, getFriendlyErrorMessage(error));
+        }
+    },
 }
 
 module.exports = authController;

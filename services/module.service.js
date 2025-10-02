@@ -48,32 +48,32 @@ const moduleService = {
 
 createModule: async (title, description, created_by) => {
   try {
-    // 1. Create module
+    const frontend_url = process.env.CLIENT_URL;
+
     const module = await Module.create({ title, description, created_by });
 
-    // 2. Get all verified trainees
     const users = await User.findAll({
       where: { status: "verified", role: "trainee" },
       attributes: ["email"],
     });
 
     if (users && users.length > 0) {
-      const emails = users.map((u) => ({ email: u.email })); //fix
+      const emails = users.map((u) => ({ email: u.email }));
 
       const subject = "📘 New Training Module Available";
       const message = `
-        A new training module has been created: <strong>${module.title}</strong>.<br><br>
+        A new module has been created: <strong>${module.title}</strong>.<br><br>
         ${module.description || "No description provided."}<br><br>
         Please log in to your account to view and start the module.
       `;
 
-      // 3. Bulk send (all in BCC)
+
       await sgMail.send({
         from: process.env.EMAIL,
         personalizations: [
           {
-            to: process.env.EMAIL, // 👈 required "to" (even if unused)
-            bcc: emails,           // 👈 SendGrid expects objects here
+            to: process.env.EMAIL,
+            bcc: emails,
           },
         ],
         subject,
@@ -85,6 +85,11 @@ createModule: async (title, description, created_by) => {
             <p style="font-size: 16px; color: #555; line-height: 1.6; margin: 0 0 20px 0;">
               ${message}
             </p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${frontend_url}" style="background: #3498db; color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; display: inline-block;">
+                Visit Site
+              </a>
+            </div>
             <hr style="margin: 24px 0; border: none; border-top: 1px solid #eee;">
             <p style="font-size: 14px; color: #888; text-align: center; margin: 0 0 6px 0;">
               This is an automated email. Please do not reply.
