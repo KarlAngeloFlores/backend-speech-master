@@ -5,7 +5,8 @@ const auth = require("../middlewares/auth");
 const checkRole = require('../middlewares/checkRole');
 
 const router = express.Router();
-const upload = multer({ dest: "/uploads" });
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
 router.post('/generate-script', auth, checkRole('trainee'), trainee.generateScript);
 router.post('/analyze-voice', auth, checkRole('trainee'), upload.single("audio"), trainee.analyzeVoice);
