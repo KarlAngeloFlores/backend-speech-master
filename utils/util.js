@@ -65,21 +65,25 @@ const throwError = (msg, code, isUserFriendly = true) => {
  */
 
 const getFriendlyErrorMessage = (error) => {
-    if (!error) return 'Something went wrong. Please try again later.';
+    if (!error) return "Something went wrong. Please try again later.";
 
     // If the error is explicitly user-friendly, return its message
-    if (error.isUserFriendly) return error.message;
+    if (error.isUserFriendly) {
+        return typeof error.message === "string" 
+            ? error.message 
+            : JSON.stringify(error.message);
+    }
 
     // Map common status codes to friendly messages
     switch (error.statusCode) {
         case 400:
-            return 'Invalid request. Please check your input.';
+            return "Invalid request. Please check your input.";
         case 404:
-            return 'Requested resource not found.';
+            return "Requested resource not found.";
         case 409:
-            return 'This action conflicts with existing data.';
+            return "This action conflicts with existing data.";
         default:
-            return 'Something went wrong. Please try again later.';
+            return "Something went wrong. Please try again later.";
     }
 };
 

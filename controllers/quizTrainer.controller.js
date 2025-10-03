@@ -16,7 +16,6 @@ const quizTrainerController = {
             logError(error);
             const status = error.statusCode || 500;
             sendError(res, status, getFriendlyErrorMessage(error));
-
         }
     },
 
