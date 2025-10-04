@@ -6,7 +6,9 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
  * @example for development only on sending emails for verifications.
  */
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
     auth: {
         user: process.env.EMAIL,
         pass: process.env.EMAIL_PASS_DEV
@@ -49,7 +51,7 @@ sendVerificationCode: async (email, verificationCode, subject) => {
   </p>
   
   <p style="font-size: 12px; color: #aaa; text-align: center; margin: 0;">
-    © ${new Date().getFullYear()} Projexlify. All rights reserved.
+    © ${new Date().getFullYear()} SpeechMaster. All rights reserved.
   </p>
 </div>
             `
@@ -88,7 +90,7 @@ sendVerificationCode: async (email, verificationCode, subject) => {
   </p>
   
   <p style="font-size: 12px; color: #aaa; text-align: center; margin: 0;">
-    © ${new Date().getFullYear()} Projexlify. All rights reserved.
+    © ${new Date().getFullYear()} SpeechMaster. All rights reserved.
   </p>
 </div>
         `
@@ -99,5 +101,4 @@ sendVerificationCode: async (email, verificationCode, subject) => {
         }
     }
 }
-
 module.exports = emailService;

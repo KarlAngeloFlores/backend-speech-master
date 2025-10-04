@@ -8,6 +8,7 @@ const {
 } = require("../models/associations");
 const { throwError } = require("../utils/util");
 const sequelize = require("../config/db");
+const emailService = require("../services/email.service");
 const { logInfo } = require("../utils/logs");
 
 const trainerService = {
@@ -29,13 +30,24 @@ const trainerService = {
   approveTrainee: async (id) => {
     const transaction = await sequelize.transaction();
     try {
-      const trainee = await User.findOne({ where: { id }, transaction });
+      const trainee = await User.findOne({
+        where: { id },
+        attributes: { exclude: ["password"] },
+        transaction,
+      });
 
       if (!trainee) {
         throwError("Trainee not found", 404, true);
       }
 
       await trainee.update({ status: "verified" }, { transaction });
+
+      const email = trainee.email;
+      await emailService.sendNotification(
+        email,
+        "Account approval",
+        "Your registration has been approved."
+      );
 
       await transaction.commit();
 
@@ -102,66 +114,64 @@ GROUP BY q.id, q.title;`);
     }
   },
 
-getTraineePerformance: async (id) => {
-  try {
-    const quizzes = await Quiz.findAll({
-      attributes: ["id", "title", "total_points"],
-      include: [
-        {
-          model: QuizScore,
-          attributes: ["score"],
-          required: false, // LEFT JOIN (include quizzes without scores)
-          where: { user_id: id },
-        },
-      ],
-    });
+  getTraineePerformance: async (id) => {
+    try {
+      const quizzes = await Quiz.findAll({
+        attributes: ["id", "title", "total_points"],
+        include: [
+          {
+            model: QuizScore,
+            attributes: ["score"],
+            required: false, // LEFT JOIN (include quizzes without scores)
+            where: { user_id: id },
+          },
+        ],
+      });
 
-    let totalPercentage = 0;
-    let countedQuizzes = 0; // total quizzes considered
+      let totalPercentage = 0;
+      let countedQuizzes = 0; // total quizzes considered
 
-    const details = quizzes.map((quiz) => {
-      const score = quiz.QuizScores[0]?.score ?? null;
-      let percentage = 0; // default 0 if not answered
+      const details = quizzes.map((quiz) => {
+        const score = quiz.QuizScores[0]?.score ?? null;
+        let percentage = 0; // default 0 if not answered
 
-      if (score !== null) {
-        percentage = (score / quiz.total_points) * 100;
+        if (score !== null) {
+          percentage = (score / quiz.total_points) * 100;
+        }
+
+        totalPercentage += percentage;
+        countedQuizzes++; // count this quiz no matter what
+
+        return {
+          quiz_id: quiz.id,
+          quiz_title: quiz.title,
+          score: score,
+          total_points: quiz.total_points,
+          percentage:
+            score !== null ? percentage.toFixed(2) + "%" : "Not taken (0%)",
+        };
+      });
+
+      let average = null;
+
+      if (countedQuizzes > 0) {
+        average = (totalPercentage / countedQuizzes).toFixed(2) + "%";
+      } else {
+        average = "No quizzes exist yet";
       }
 
-      totalPercentage += percentage;
-      countedQuizzes++; // count this quiz no matter what
-
       return {
-        quiz_id: quiz.id,
-        quiz_title: quiz.title,
-        score: score,
-        total_points: quiz.total_points,
-        percentage: score !== null ? percentage.toFixed(2) + "%" : "Not taken (0%)",
+        message: "Fetched trainee performance",
+        data: {
+          details,
+          quizzes_total: quizzes.length,
+          quizzes_taken: quizzes.filter((q) => q.QuizScores.length > 0).length,
+          average_grade: average,
+        },
       };
-    });
-
-    let average = null;
-
-    if (countedQuizzes > 0) {
-      average = (totalPercentage / countedQuizzes).toFixed(2) + "%";
-    } else {
-      average = "No quizzes exist yet";
+    } catch (error) {
+      throw error;
     }
-
-    return {
-      message: "Fetched trainee performance",
-      data: {
-        details,
-        quizzes_total: quizzes.length,
-        quizzes_taken: quizzes.filter(q => q.QuizScores.length > 0).length,
-        average_grade: average,
-      },
-    };
-  } catch (error) {
-    throw error;
-  }
-},
-
-
-
+  },
 };
 module.exports = trainerService;

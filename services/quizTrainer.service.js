@@ -102,7 +102,7 @@ const quizTrainerService = {
             FROM user u
             LEFT JOIN quiz_score qs ON u.id = qs.user_id
             AND qs.quiz_id = ? 
-            WHERE u.role = 'trainee';`, { replacements: [id] });
+            WHERE u.role = 'trainee' AND u.status = 'verified';`, { replacements: [id] });
 
             const quiz_info = await Quiz.findOne({ where: { id } });
 
