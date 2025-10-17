@@ -10,5 +10,6 @@ const upload = multer({ storage });
 
 router.post('/generate-script', auth, checkRole('trainee'), trainee.generateScript);
 router.post('/analyze-voice', auth, checkRole('trainee'), upload.single("audio"), trainee.analyzeVoice);
+router.post('/scenario-feedback', auth, checkRole('trainee'), upload.single("audio"), trainee.scenarioFeedback);
 
 module.exports = router;
