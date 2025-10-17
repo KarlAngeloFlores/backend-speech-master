@@ -6,5 +6,7 @@ const checkRole = require('../middlewares/checkRole');
 const router = express.Router();
 
 router.get("/home", auth, checkRole("trainee"), traineeController.getHome);
+router.get("/dictionary/:word", traineeController.dictionaryProxy);
+router.get("/alternative-dictionary/:word", traineeController.alternativeDictionary);
 
 module.exports = router;

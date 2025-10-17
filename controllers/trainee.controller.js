@@ -189,6 +189,60 @@ const transcription = await client.audio.transcriptions.create({
             const status = error.statusCode || 500;
             sendError(res, status, getFriendlyErrorMessage(error));
         }
+      },
+      
+      dictionaryProxy: async (req, res) => {
+        try {
+          
+          const result = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${req.params.word}`);
+          const data = await result.json();
+          logSuccess("Fetched dictionary data successfully");
+          sendSuccess(res, 200, data);
+
+        } catch (error) {
+          logError(error);
+          const status = error.statusCode || 500;
+          sendError(res, status, getFriendlyErrorMessage(error));
+        }
+      },
+
+      alternativeDictionary: async (req, res) => {
+        try {
+          const word = req.params.word;
+          const prompt = [
+            {
+              role: "system",
+              content: "You are a helpful English dictionary. Define the word in simple English. Respond with a JSON object: { 'word': string, 'definition': string }"
+            },
+            {
+              role: "user",
+              content: `Define the word: ${word}`
+            }
+          ];
+
+          const response = await client.responses.create({
+            model: cheaper_model,
+            input: prompt,
+            temperature: 0.2
+          });
+
+          let definition = null;
+          try {
+            definition = JSON.parse(response.output_text);
+          } catch (e) {
+            definition = {
+              word,
+              definition: response.output_text
+            };
+          }
+
+          logSuccess("Fetched OpenAI dictionary definition successfully");
+          sendSuccess(res, 200, definition);
+        } catch (error) {
+          logError(error);
+          const status = error.statusCode || 500;
+          sendError(res, status, getFriendlyErrorMessage(error));
+        }
       }
 }
 
