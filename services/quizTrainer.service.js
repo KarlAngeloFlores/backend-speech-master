@@ -2,7 +2,7 @@ const { Quiz, QuizQuestion, User } = require("../models/associations");
 const sequelize = require("../config/db");
 const { throwError } = require("../utils/util");
 const { logInfo } = require('../utils/logs');
-const sgMail = require("@sendgrid/mail");
+const emailService = require("./email.service");
 
 const quizTrainerService = {
     createQuiz: async (type, title, total_points, timer_seconds, created_by, questions) => {
@@ -36,7 +36,7 @@ const quizTrainerService = {
             logInfo(questionValues);
             const frontend_url = process.env.CLIENT_URL;
 
-                        //add email notification
+            //add email notification
             const users = await User.findAll({
                 where: { status: "verified", role: "trainee" },
                 attributes: ["email"],
@@ -44,46 +44,21 @@ const quizTrainerService = {
             });
 
             if (users && users.length > 0) { 
-                const emails = users.map((u) => ({ email: u.email }));
-                
                 const subject = "New Quiz Available!";
                 const message = `A new quiz titled "${title}" has been created. Log in to your account to take the quiz!`;
-
-                await sgMail.send({
-                    from: process.env.EMAIL,
-                    personalizations: [{
-                        to: process.env.EMAIL,
-                        bcc: emails,
-                    }],
-                    subject,
-                    html: `
-                              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 24px; border-radius: 12px; background: #ffffff; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-            <h2 style="color: #2c3e50; text-align: center; margin-bottom: 20px;">
-              ${subject}
-            </h2>
-            <p style="font-size: 16px; color: #555; line-height: 1.6; margin: 0 0 20px 0;">
-              ${message}
-            </p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${frontend_url}" style="background: #3498db; color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; display: inline-block;">
-                Visit Site
-              </a>
-            </div>
-            <hr style="margin: 24px 0; border: none; border-top: 1px solid #eee;">
-            <p style="font-size: 14px; color: #888; text-align: center; margin: 0 0 6px 0;">
-              This is an automated email. Please do not reply.
-            </p>
-            <p style="font-size: 12px; color: #aaa; text-align: center; margin: 0;">
-              © ${new Date().getFullYear()} Projexlify. All rights reserved.
-            </p>
-          </div>`
-                })
-            } 
+                
+                // Send individual emails to each user
+                const emailPromises = users.map(user => 
+                    emailService.sendNotification(user.email, subject, message)
+                        .catch(err => logInfo(`Failed to send email to ${user.email}: ${err.message}`))
+                );
+                
+                await Promise.all(emailPromises);
+            }
+                
             
             await QuizQuestion.bulkCreate(questionValues, { transaction });
             await transaction.commit();
-
-
 
             return {
                 message: "Quiz created successfully",

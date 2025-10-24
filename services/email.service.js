@@ -6,14 +6,13 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
  * @example for development only on sending emails for verifications.
  */
 const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
-    auth: {
-        user: process.env.EMAIL,
-        pass: process.env.EMAIL_PASS_DEV
-    }
-})
+  host: process.env.BREVO_HOST,
+  port: process.env.BREVO_PORT,
+  auth: {
+    user: process.env.BREVO_EMAIL,
+    pass: process.env.BREVO_PASS,
+  },
+});
 
 const emailService = {
 sendVerificationCode: async (email, verificationCode, subject) => {
@@ -64,8 +63,8 @@ sendVerificationCode: async (email, verificationCode, subject) => {
     sendNotification: async (email, subject, message) => {
         try {
 
-        await sgMail.send({
-        from: process.env.EMAIL,
+        await transporter.sendMail({
+        from: process.env.BREVO_MAIN_EMAIL,
         to: email,
         subject: subject,
         html: `
@@ -99,6 +98,43 @@ sendVerificationCode: async (email, verificationCode, subject) => {
         } catch (error) {
             throw error;
         }
+    },
+
+    sendBulkEmail: async (emails, subject, message, frontend_url) => {
+        try {
+            await transporter.sendMail({
+                from: process.env.BREVO_EMAIL,
+                to: process.env.BREVO_MAIN_EMAIL,
+                bcc: emails.join(','), // comma-separated string
+                subject,
+                html: `
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 24px; border-radius: 12px; background: #ffffff; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+  <h2 style="color: #2c3e50; text-align: center; margin-bottom: 20px;">
+    ${subject}
+  </h2>
+  <p style="font-size: 16px; color: #555; line-height: 1.6; margin: 0 0 20px 0;">
+    ${message}
+  </p>
+  <div style="text-align: center; margin: 30px 0;">
+    <a href="${frontend_url}" style="background: #3498db; color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; display: inline-block;">
+      Visit Site
+    </a>
+  </div>
+  <hr style="margin: 24px 0; border: none; border-top: 1px solid #eee;">
+  <p style="font-size: 14px; color: #888; text-align: center; margin: 0 0 6px 0;">
+    This is an automated email. Please do not reply.
+  </p>
+  <p style="font-size: 12px; color: #aaa; text-align: center; margin: 0;">
+    © ${new Date().getFullYear()} SpeechMaster. All rights reserved.
+  </p>
+</div>
+                `
+            });
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }
     }
 }
+
 module.exports = emailService;
