@@ -61,6 +61,39 @@ const trainerService = {
     }
   },
 
+  setPendingTrainee: async (id) => {
+    const transaction = await sequelize.transaction();
+    try {
+      const trainee = await User.findOne({
+        where: { id },
+        attributes: { exclude: ["password"] },
+        transaction,
+      });
+
+      if (!trainee) {
+        throwError("Trainee not found", 404, true);
+      }
+
+      await trainee.update({ status: "pending" }, { transaction });
+
+      const email = trainee.email;
+      await emailService.sendNotification(
+        email,
+        "Account status update",
+        "Your account status has been set to pending."
+      );
+
+      await transaction.commit();
+
+      return {
+        message: "The trainee has been updated",
+        data: trainee,
+      };
+    } catch (error) {
+      
+    }
+  },
+
   deleteTrainee: async (id) => {
     const transaction = await sequelize.transaction();
     try {

@@ -43,9 +43,9 @@ const moduleController = {
   createModule: async (req, res) => {
     try {
       const userId = req.user.id;
-      const { title, description } = req.body;
+      const { title, category } = req.body;
 
-      const result = await moduleService.createModule(title, description, userId);
+      const result = await moduleService.createModule(title, category, userId);
       logSuccess(result.message);
       sendSuccess(res, 201, result);
     } catch (error) {
@@ -57,8 +57,8 @@ const moduleController = {
 
   updateModule: async (req, res) => {
     try {
-      const { id, title, description } = req.body;
-      const result = await moduleService.updateModule(id, title, description);
+      const { id, title, category } = req.body;
+      const result = await moduleService.updateModule(id, title, category);
       logSuccess(result.message);
       sendSuccess(res, 200, result);
     } catch (error) {

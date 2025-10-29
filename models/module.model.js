@@ -11,9 +11,13 @@ const Module = sequelize.define("Module", {
     type: DataTypes.STRING(255),
     allowNull: false,
   },
-  description: {
-    type: DataTypes.TEXT,
+  category: {
+    type: DataTypes.STRING(255),
     allowNull: false
+  },
+  status: {
+    type: DataTypes.STRING(255),
+    defaultValue: "published",
   },
   created_by: {
     type: DataTypes.INTEGER,

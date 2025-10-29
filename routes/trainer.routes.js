@@ -9,6 +9,7 @@ router.get('/home', auth, checkRole("trainer"), trainerController.getHome);
 router.get('/trainees', auth, checkRole('trainer'), trainerController.getTrainees);
 router.get('/trainees/performance/:id', auth, checkRole('trainer'), trainerController.getTraineePerformance);
 router.patch('/trainees/:id/approve', auth, checkRole('trainer'), trainerController.approveTrainee);
+router.patch('/trainees/:id/pending', auth, checkRole('trainer'), trainerController.setPendingTrainee);
 router.delete('/trainees/:id', auth, checkRole('trainer'), trainerController.deleteTrainee);
 
 module.exports = router;

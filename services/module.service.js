@@ -1,4 +1,4 @@
-const { Module, ModuleContent, User } = require("../models/associations");
+const { Module, ModuleContent, User, ModuleHistory } = require("../models/associations");
 const sequelize = require("../config/db");
 const { throwError } = require("../utils/util"); // adjust path
 const { logInfo } = require("../utils/logs");
@@ -46,36 +46,53 @@ const moduleService = {
     }
   },
 
-createModule: async (title, description, created_by) => {
+createModule: async (title, category, created_by) => {
+  const transaction = await sequelize.transaction();
   try {
     const frontend_url = process.env.CLIENT_URL;
 
-    const module = await Module.create({ title, description, created_by });
+    //module title should be unique
+    const existingModule = await Module.findOne({ where: { title } });
+    if (existingModule) {
+      throwError("Module with this title already exists", 400, true);
+    }
+
+    const module = await Module.create({ title, category, created_by }, { transaction });
+
+    await ModuleHistory.create({
+      module_id: module.id,
+      action: "created",
+      created_by,
+    }, { transaction });
 
     const users = await User.findAll({
       where: { status: "verified", role: "trainee" },
       attributes: ["email"],
-    });
+    }, { transaction });
 
-    if (users && users.length > 0) {
-      const emails = users.map((u) => ({ email: u.email }));
+    // if (users && users.length > 0) {
+    //   const emails = users.map((u) => ({ email: u.email }));
 
-      const subject = "📘 New Training Module Available";
-      const message = `
-        A new module has been created: <strong>${module.title}</strong>.<br><br>
-        ${module.description || "No description provided."}<br><br>
-        Please log in to your account to view and start the module.
-      `;
+    //   const subject = "📘 New Training Module Available";
+    //   const message = `
+    //     A new module has been created: <strong>${module.title}</strong>.<br><br>
+    //     ${module.description || "No description provided."}<br><br>
+    //     Please log in to your account to view and start the module.
+    //   `;
 
-      const emailPromises = emails.map((user) =>
-        emailService
-          .sendNotification(user.email, subject, message)
-          .catch((err) =>
-            logInfo(`Failed to send email to ${user.email}: ${err.message}`)
-          )
-      );
-      await Promise.all(emailPromises);
+      // const emailPromises = emails.map((user) =>
+      //   emailService
+      //     .sendNotification(user.email, subject, message)
+      //     .catch((err) =>
+      //       logInfo(`Failed to send email to ${user.email}: ${err.message}`)
+      //     )
+      // );
+      // await Promise.all(emailPromises);
 
+
+      /**
+       * @BREAK
+       */
       // await sgMail.send({
       //   from: process.env.EMAIL,
       //   personalizations: [
@@ -109,7 +126,9 @@ createModule: async (title, description, created_by) => {
       //   `,
       // });
       
-    }
+    // }
+
+    await transaction.commit();
 
     return {
       message: "Module created successfully",
@@ -117,24 +136,61 @@ createModule: async (title, description, created_by) => {
     };
   } catch (error) {
     console.error("SendGrid error:", error.response?.body || error.message);
+    await transaction.rollback();
     throw error;
   }
 },
 
-  updateModule: async (id, title, description) => {
+  updateModule: async (id, title, category) => {
     const transaction = await sequelize.transaction();
     try {
+      const existingTitle = await Module.findOne({ where: { title, id: { [Op.ne]: id } } }, { transaction });
+      if (existingTitle) {
+        throwError("Module with this title already exists", 400, true);
+      }
+
       const module = await Module.findOne({ where: { id }, transaction });
       // logInfo(module);
       if (!module) {
         throwError("Module not found", 404, true);
       }
+      
+      await module.update({ title, category }, { transaction });
+      await ModuleHistory.create({
+        module_id: module.id,
+        action: "updated",
+        changes: { title, category },
+      }, { transaction });
 
-      await module.update({ title, description }, { transaction });
       await transaction.commit();
 
       return {
         message: "Module updated successfully",
+        data: module,
+      };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  },
+
+  archiveModule: async (id) => {
+    const transaction = await sequelize.transaction();
+    try {
+      const module = await Module.findOne({ where: { id } });
+      if (!module) {
+        throwError("Module not found", 404, true);
+      }
+      await module.update({ is_archived: true }, { transaction });
+      await ModuleHistory.create({
+        module_id: module.id,
+        action: "archived",
+        created_by: module.created_by,
+      }, { transaction });
+
+      await transaction.commit();
+      return {
+        message: "Module archived successfully",
         data: module,
       };
     } catch (error) {
@@ -200,6 +256,7 @@ createModule: async (title, description, created_by) => {
   },
 
   insertFile: async (moduleId, { name, file, file_type, file_size }) => {
+    const transaction = await sequelize.transaction();
     try {
       // Ensure the parent module exists
       const module = await Module.findByPk(moduleId);
@@ -213,18 +270,28 @@ createModule: async (title, description, created_by) => {
         file,
         file_type,
         file_size,
-      });
+      } , { transaction });
+
+      await ModuleHistory.create({
+        module_id: module.id,
+        action: `file_uploaded: ${name}`,
+        created_by: module.created_by,
+      }, { transaction });
+
+      await transaction.commit();
 
       return {
         message: "File uploaded successfully",
         data: newFile,
       };
     } catch (error) {
+      await transaction.rollback();
       throw error;
     }
   },
 
   deleteFile: async (id) => {
+    const transaction = await sequelize.transaction();
     try {
       const file = await ModuleContent.findByPk(id);
 
@@ -232,13 +299,21 @@ createModule: async (title, description, created_by) => {
         throwError("File not found", 404, true);
       }
 
-      await file.destroy();
+      await file.destroy({ transaction });
+      await ModuleHistory.create({
+        module_id: file.module_id,
+        action: `file_deleted: ${file.name}`,
+        created_by: file.module_id,
+      }, { transaction });
+      await transaction.commit();
 
       return {
         message: "File deleted successfully",
         id,
       };
+
     } catch (error) {
+      await transaction.rollback();
       throw error;
     }
   },

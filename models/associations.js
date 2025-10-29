@@ -5,6 +5,7 @@ const QuizAttempt = require("./quizAttempt.model");
 const QuizScore = require("./quizScore.model");
 const Module = require("./module.model");
 const ModuleContent = require("./moduleContent.model");
+const ModuleHistory = require("./moduleHistory.model");
 const VerificationCode = require("./verification.model");
 
 /**
@@ -37,11 +38,20 @@ QuizScore.belongsTo(Quiz, { foreignKey: "quiz_id", onDelete: "CASCADE" });
 
 // User → Module (1:N) (trainer creates modules)
 User.hasMany(Module, { foreignKey: "created_by", onDelete: "CASCADE" });
+User.hasMany
 Module.belongsTo(User, { foreignKey: "created_by", onDelete: "CASCADE" });
 
 // Module → ModuleContent (1:N)
 Module.hasMany(ModuleContent, { foreignKey: "module_id", onDelete: "CASCADE" });
 ModuleContent.belongsTo(Module, { foreignKey: "module_id", onDelete: "CASCADE" });
+
+// Module → ModuleHistory (1:N)
+Module.hasMany(ModuleHistory, { foreignKey: "module_id", onDelete: "CASCADE" });
+ModuleHistory.belongsTo(Module, { foreignKey: "module_id", onDelete: "CASCADE" });
+
+// User → ModuleHistory (1:N)
+User.hasMany(ModuleHistory, { foreignKey: "created_by", onDelete: "CASCADE" });
+ModuleHistory.belongsTo(User, { foreignKey: "created_by", onDelete: "CASCADE" });
 
 // User → VerificationCode (1:N)
 User.hasMany(VerificationCode, { foreignKey: "user_id", onDelete: "CASCADE" });
@@ -55,5 +65,6 @@ module.exports = {
   QuizScore,
   Module,
   ModuleContent,
+  ModuleHistory,
   VerificationCode,
 };

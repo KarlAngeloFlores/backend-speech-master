@@ -26,6 +26,18 @@ const trainerController = {
             sendError(res, status, getFriendlyErrorMessage(error));
         }
     },
+    setPendingTrainee: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const result = await trainerService.setPendingTrainee(id);
+            logSuccess(result.message);
+            sendSuccess(res, 200, result);
+        } catch (error) {
+            logError(error.message);
+            const status = error.statusCode || 500;
+            sendError(res, status, getFriendlyErrorMessage(error));
+        }
+    },
     deleteTrainee: async (req, res) => {
         try {
             const { id } = req.params;
