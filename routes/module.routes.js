@@ -15,8 +15,12 @@ const router = express.Router();
 router.post("/", auth, checkRole("trainer"), moduleController.createModule);
 router.get("/:id/:content", auth, moduleController.getModule); // both accessible by trainer and trainee
 router.get("/", auth, moduleController.getModules);             // both accessible by trainer and trainee
+router.get("/history/:id", moduleController.getModuleHistory); // both accessible by trainer and trainee
 router.patch("/", auth, checkRole("trainer"), moduleController.updateModule);
+router.patch("/archive/:id", auth, checkRole("trainer"), moduleController.archiveModule);
+router.patch("/restore/:id", auth, checkRole("trainer"), moduleController.restoreModule);
 router.delete("/:id", auth, checkRole("trainer"), moduleController.deleteModule); // fixed `:id`
+
 
 /**
  * =======================

@@ -40,6 +40,19 @@ const moduleController = {
     }
   },
 
+  getModuleHistory: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const result = await moduleService.getModuleHistory(id);
+      logSuccess(result.message);
+      sendSuccess(res, 200, result);
+    } catch (error) {
+      logError(error.message);
+      const status = error.statusCode || 500;
+      sendError(res, status, getFriendlyErrorMessage(error));
+    }
+  },
+
   createModule: async (req, res) => {
     try {
       const userId = req.user.id;
@@ -48,6 +61,32 @@ const moduleController = {
       const result = await moduleService.createModule(title, category, userId);
       logSuccess(result.message);
       sendSuccess(res, 201, result);
+    } catch (error) {
+      logError(error.message);
+      const status = error.statusCode || 500;
+      sendError(res, status, getFriendlyErrorMessage(error));
+    }
+  },
+
+  archiveModule: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const result = await moduleService.archiveModule(id);
+      logSuccess(result.message);
+      sendSuccess(res, 200, result);
+    } catch (error) {
+      logError(error.message);
+      const status = error.statusCode || 500;
+      sendError(res, status, getFriendlyErrorMessage(error));
+    }
+  },
+
+  restoreModule: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const result = await moduleService.restoreModule(id);
+      logSuccess(result.message);
+      sendSuccess(res, 200, result);
     } catch (error) {
       logError(error.message);
       const status = error.statusCode || 500;

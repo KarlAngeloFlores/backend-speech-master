@@ -4,6 +4,7 @@ const { throwError } = require("../utils/util"); // adjust path
 const { logInfo } = require("../utils/logs");
 const emailService = require("./email.service");
 const sgMail = require("@sendgrid/mail");
+const { Op } = require("sequelize");
 
 const moduleService = {
   /**
@@ -40,6 +41,24 @@ const moduleService = {
       return {
         message: "Module fetched successfully",
         data: module,
+      };
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getModuleHistory: async (moduleId) => {
+    //connects to user model to get user info
+    try {
+      const history = await ModuleHistory.findAll({
+        where: { module_id: moduleId },
+        order: [["created_at", "DESC"]],
+        include: [{ model: User, attributes: ["id", "name", "email", "role"] }],
+      });
+
+      return {
+        message: "Module history fetched successfully",
+        data: history,
       };
     } catch (error) {
       throw error;
@@ -159,6 +178,7 @@ createModule: async (title, category, created_by) => {
       await ModuleHistory.create({
         module_id: module.id,
         action: "updated",
+        created_by: module.created_by,
         changes: { title, category },
       }, { transaction });
 
@@ -181,16 +201,41 @@ createModule: async (title, category, created_by) => {
       if (!module) {
         throwError("Module not found", 404, true);
       }
-      await module.update({ is_archived: true }, { transaction });
+      await module.update({ status: "archived" }, { transaction });
       await ModuleHistory.create({
         module_id: module.id,
-        action: "archived",
+        action: `archived: ${module.title}`,
         created_by: module.created_by,
       }, { transaction });
 
       await transaction.commit();
       return {
         message: "Module archived successfully",
+        data: module,
+      };
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  },
+
+  restoreModule: async (id) => {
+    const transaction = await sequelize.transaction();
+    try {
+      const module = await Module.findOne({ where: { id } });
+      if (!module) {
+        throwError("Module not found", 404, true);
+      }
+      await module.update({ status: "published" }, { transaction });
+      await ModuleHistory.create({
+        module_id: module.id,
+        action: `restored: ${module.title}`,
+        created_by: module.created_by,
+      }, { transaction });
+
+      await transaction.commit();
+      return {
+        message: "Module restored successfully",
         data: module,
       };
     } catch (error) {
