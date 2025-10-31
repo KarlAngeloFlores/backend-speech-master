@@ -136,7 +136,8 @@ CREATE TABLE quiz_score (
 CREATE TABLE module (
     id INT PRIMARY KEY AUTO_INCREMENT, 
     title VARCHAR(255) NOT NULL,
-    description TEXT NOT NULL,
+    category VARCHAR(255) NOT NULL,
+    status  varchar(255) NOT NULL,
     created_by INT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (created_by) REFERENCES user(id) ON DELETE CASCADE
@@ -152,6 +153,17 @@ CREATE TABLE module_contents (
     file_size INT,          -- size in bytes
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (module_id) REFERENCES module(id) ON DELETE CASCADE
+);
+
+-- module history
+CREATE TABLE module_history (
+	id int primary key auto_increment,
+    module_id int not null,
+    action varchar(255),
+    created_by int not null,
+    created_at datetime default current_timestamp,
+    foreign key (module_id) references module(id) on delete cascade,
+    foreign key (created_by) references user(id) on delete cascade
 );
 
 -- Verification codes
