@@ -15,7 +15,7 @@ const allowedOrigins = [
   'https://speechmaster.netlify.app',
 ];
 
-const io = new Server(server, { cors: { origin: allowedOrigins } });
+const io = new Server(server, { cors: { origin: allowedOrigins, credentials: true }, transports: ['websocket', 'polling'] });
 // Initialize chat socket
 chatSocket(io);
 
