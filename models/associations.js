@@ -7,6 +7,8 @@ const Module = require("./module.model");
 const ModuleContent = require("./moduleContent.model");
 const ModuleHistory = require("./moduleHistory.model");
 const VerificationCode = require("./verification.model");
+const ChatRoom = require("./chatRoom.model");
+const ChatMessage = require("./chatMessage.model");
 
 /**
  * Associations
@@ -38,7 +40,6 @@ QuizScore.belongsTo(Quiz, { foreignKey: "quiz_id", onDelete: "CASCADE" });
 
 // User → Module (1:N) (trainer creates modules)
 User.hasMany(Module, { foreignKey: "created_by", onDelete: "CASCADE" });
-User.hasMany
 Module.belongsTo(User, { foreignKey: "created_by", onDelete: "CASCADE" });
 
 // Module → ModuleContent (1:N)
@@ -57,6 +58,18 @@ ModuleHistory.belongsTo(User, { foreignKey: "created_by", onDelete: "CASCADE" })
 User.hasMany(VerificationCode, { foreignKey: "user_id", onDelete: "CASCADE" });
 VerificationCode.belongsTo(User, { foreignKey: "user_id", onDelete: "CASCADE" });
 
+// User → ChatRoom (1:N) (as trainer)
+User.hasMany(ChatRoom, { foreignKey: "trainer_id", as: "TrainerRooms", onDelete: "CASCADE" });
+ChatRoom.belongsTo(User, { foreignKey: "trainer_id", as: "Trainer", onDelete: "CASCADE" });
+
+// User → ChatMessage (1:N)
+User.hasMany(ChatMessage, { foreignKey: "sender_id", as: "SentMessages", onDelete: "CASCADE" });
+ChatMessage.belongsTo(User, { foreignKey: "sender_id", as: "Sender", onDelete: "CASCADE" });
+// ChatRoom → ChatMessage (1:N)
+ChatRoom.hasMany(ChatMessage, { foreignKey: "room_id", as: "Messages", onDelete: "CASCADE" });
+ChatMessage.belongsTo(ChatRoom, { foreignKey: "room_id", as: "Room", onDelete: "CASCADE" });
+
+
 module.exports = {
   User,
   Quiz,
@@ -67,4 +80,6 @@ module.exports = {
   ModuleContent,
   ModuleHistory,
   VerificationCode,
+  ChatRoom,
+  ChatMessage,
 };

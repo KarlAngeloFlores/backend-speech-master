@@ -1,7 +1,34 @@
+const http = require('http');
+const { Server } = require('socket.io');
 const clc = require('cli-color');
-const app = require('./app');
+const sequelize = require('./config/db');
+const app = require('./app'); // import Express app
+const chatSocket = require('./socket/chat.socket');
+
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-    console.log(clc.bgGreen.black(`Server running on http://localhost:${PORT}`)); 
-});
+const server = http.createServer(app);
+
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://192.168.1.9:5173',
+  'https://speechmaster.netlify.app',
+];
+
+const io = new Server(server, { cors: { origin: allowedOrigins } });
+// Initialize chat socket
+chatSocket(io);
+
+// Initialize DB + Server
+(async () => {
+  try {
+    await sequelize.authenticate();
+    console.log(clc.cyan('💾 Database connection established successfully'));
+
+    server.listen(PORT, () => {
+      console.log(clc.bgGreen.black(`✅ Server operational at http://localhost:${PORT}`));
+    });
+  } catch (error) {
+    console.error(clc.bgRed.white('❌ Database connection failed:'), error);
+  }
+})();

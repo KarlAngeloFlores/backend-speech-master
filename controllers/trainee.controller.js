@@ -478,6 +478,18 @@ scenarioFeedback: async (req, res) => {
       sendError(res, status, getFriendlyErrorMessage(error));
     }
   },
+
+  getTrainers: async (req, res) => {
+    try {
+      const result = await traineeService.getTrainers();
+      logSuccess("Fetched trainers successfully");
+      sendSuccess(res, 200, result);
+    } catch (error) {
+      logError(error.message);
+      const status = error.statusCode || 500;
+      sendError(res, status, getFriendlyErrorMessage(error));
+    }
+  }
 };
 
 module.exports = traineeController;

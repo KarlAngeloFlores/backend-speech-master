@@ -1,5 +1,5 @@
 const sequelize = require("../config/db");
-const { Quiz, QuizAttempt, Module } = require("../models/associations");
+const { Quiz, QuizAttempt, Module, User } = require("../models/associations");
 
 const traineeService = {
   getHome: async (user_id) => {
@@ -32,6 +32,23 @@ const traineeService = {
       throw error;
     }
   },
+
+  getTrainers: async () => {
+    try {
+      const trainers = await User.findAll({
+        where: {
+          role: 'trainer'
+        }, attributes: ['id', 'first_name', 'last_name', 'email']
+      });
+      return {
+        message: "Trainers fetched successfully",
+        trainers
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
 };
 
 module.exports = traineeService;

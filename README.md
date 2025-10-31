@@ -177,6 +177,29 @@ CREATE TABLE verification_codes (
     FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 );
 
+-- Chat rooms (each trainer ↔ trainee pair)
+CREATE TABLE chat_room (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    trainer_id INT NOT NULL,
+    trainee_id INT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (trainer_id) REFERENCES user(id) ON DELETE CASCADE,
+    FOREIGN KEY (trainee_id) REFERENCES user(id) ON DELETE CASCADE,
+    UNIQUE (trainer_id, trainee_id)
+);
+
+-- Chat messages (text only)
+CREATE TABLE chat_message (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    room_id INT NOT NULL,
+    sender_id INT NOT NULL,
+    message TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (room_id) REFERENCES chat_room(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES user(id) ON DELETE CASCADE
+);
+
+
 ```
 
 ### 4️⃣ Configure environment variables
