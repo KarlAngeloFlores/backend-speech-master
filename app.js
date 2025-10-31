@@ -6,6 +6,7 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://192.168.1.9:5173',
   'https://speechmaster.netlify.app',
+  'https://frontend-speech-master.vercel.app'
 ];
 
 const app = express();
