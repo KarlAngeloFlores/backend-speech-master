@@ -354,33 +354,36 @@ createModule: async (title, category, created_by) => {
     }
   },
 
-  deleteFile: async (id) => {
-    const transaction = await sequelize.transaction();
-    try {
-      const file = await ModuleContent.findByPk(id);
+deleteFile: async (id, userId) => {
+  const transaction = await sequelize.transaction();
+  try {
+    const file = await ModuleContent.findByPk(id);
 
-      if (!file) {
-        throwError("File not found", 404, true);
-      }
-
-      await file.destroy({ transaction });
-      await ModuleHistory.create({
-        module_id: file.module_id,
-        action: `file_deleted: ${file.name}`,
-        created_by: file.module_id,
-      }, { transaction });
-      await transaction.commit();
-
-      return {
-        message: "File deleted successfully",
-        id,
-      };
-
-    } catch (error) {
-      await transaction.rollback();
-      throw error;
+    if (!file) {
+      throwError("File not found", 404, true);
     }
-  },
+
+    await ModuleHistory.create({
+      module_id: file.module_id,
+      action: `file_deleted: ${file.name}`,
+      created_by: userId, // ✅ correct user reference
+    }, { transaction });
+
+    await file.destroy({ transaction });
+
+    await transaction.commit();
+
+    return {
+      message: "File deleted successfully",
+      id,
+    };
+
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
+  }
+},
+
 };
 
 module.exports = moduleService;

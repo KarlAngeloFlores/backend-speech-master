@@ -201,7 +201,8 @@ insertFile: async (req, res) => {
   deleteFile: async (req, res) => {
     try {
       const { id } = req.params;
-      const result = await moduleService.deleteFile(id);
+      const userId = req.user.id;
+      const result = await moduleService.deleteFile(id, userId);
       logSuccess(result.message);
       sendSuccess(res, 200, result);
     } catch (error) {
