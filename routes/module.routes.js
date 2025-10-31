@@ -12,14 +12,15 @@ const router = express.Router();
  * MODULES CRUD
  * =======================
  */
+router.get("/available/modules", auth, moduleController.getAvailableModules); // trainee only - MUST come first
+router.get("/:id/history", auth, moduleController.getModuleHistory); // more specific - comes before generic
+router.get("/:id/:content", auth, moduleController.getModule); // generic - comes last
+router.get("/", auth, moduleController.getModules);
 router.post("/", auth, checkRole("trainer"), moduleController.createModule);
-router.get("/:id/:content", auth, moduleController.getModule); // both accessible by trainer and trainee
-router.get("/", auth, moduleController.getModules);             // both accessible by trainer and trainee
-router.get("/history/:id", moduleController.getModuleHistory); // both accessible by trainer and trainee
 router.patch("/", auth, checkRole("trainer"), moduleController.updateModule);
 router.patch("/archive/:id", auth, checkRole("trainer"), moduleController.archiveModule);
 router.patch("/restore/:id", auth, checkRole("trainer"), moduleController.restoreModule);
-router.delete("/:id", auth, checkRole("trainer"), moduleController.deleteModule); // fixed `:id`
+router.delete("/:id", auth, checkRole("trainer"), moduleController.deleteModule);
 
 
 /**

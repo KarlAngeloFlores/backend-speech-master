@@ -47,13 +47,31 @@ const moduleService = {
     }
   },
 
+  getAvailableModules: async () => {
+    try {
+      const modules = await Module.findAll({
+        where: { status: "published" },
+        order: [["created_at", "DESC"]],
+      });
+
+      return {
+        message: "Available modules fetched successfully",
+        data: modules,
+      };
+    } catch (error) {
+      throw error;
+    }
+  },
+
   getModuleHistory: async (moduleId) => {
     //connects to user model to get user info
     try {
       const history = await ModuleHistory.findAll({
         where: { module_id: moduleId },
         order: [["created_at", "DESC"]],
-        include: [{ model: User, attributes: ["id", "name", "email", "role"] }],
+
+        //make the User = user smaller
+        include: [{ model: User, attributes: ["email"] }],
       });
 
       return {
@@ -61,6 +79,7 @@ const moduleService = {
         data: history,
       };
     } catch (error) {
+      console.log(error)
       throw error;
     }
   },

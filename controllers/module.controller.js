@@ -40,14 +40,27 @@ const moduleController = {
     }
   },
 
-  getModuleHistory: async (req, res) => {
+  getAvailableModules: async (req, res) => {
     try {
-      const { id } = req.params;
-      const result = await moduleService.getModuleHistory(id);
+      const result = await moduleService.getAvailableModules();
       logSuccess(result.message);
       sendSuccess(res, 200, result);
     } catch (error) {
       logError(error.message);
+      const status = error.statusCode || 500;
+      sendError(res, status, getFriendlyErrorMessage(error));
+    }
+  },
+
+  getModuleHistory: async (req, res) => {
+    try {
+      const { id } = req.params;
+      console.log('MODULE HISTORY ID:', id);
+      const result = await moduleService.getModuleHistory(id);
+      logSuccess(result.message);
+      sendSuccess(res, 200, result);
+    } catch (error) {
+      logError(error);
       const status = error.statusCode || 500;
       sendError(res, status, getFriendlyErrorMessage(error));
     }
