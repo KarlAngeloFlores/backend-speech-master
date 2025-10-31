@@ -13,10 +13,27 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://192.168.1.9:5173',
   'https://speechmaster.netlify.app',
-  'https://frontend-speech-master.vercel.app'
-];
+  'https://frontend-speech-master.vercel.app',
+  process.env.FRONTEND_URL,
+].filter(Boolean);
 
-const io = new Server(server, { cors: { origin: allowedOrigins, credentials: true }, transports: ['websocket', 'polling'] });
+const io = new Server(server, {
+  cors: {
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`Socket.IO blocked origin: ${origin}`);
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  },
+  transports: ['websocket', 'polling'],
+  allowEIO3: true
+});
 // Initialize chat socket
 chatSocket(io);
 
