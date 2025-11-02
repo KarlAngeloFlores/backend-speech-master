@@ -108,24 +108,25 @@ createModule: async (title, category, created_by) => {
       attributes: ["email"],
     }, { transaction });
 
-    // if (users && users.length > 0) {
-    //   const emails = users.map((u) => ({ email: u.email }));
+    if (users && users.length > 0) {
+      const emails = users.map((u) => ({ email: u.email }));
 
-    //   const subject = "📘 New Training Module Available";
-    //   const message = `
-    //     A new module has been created: <strong>${module.title}</strong>.<br><br>
-    //     ${module.description || "No description provided."}<br><br>
-    //     Please log in to your account to view and start the module.
-    //   `;
+      const subject = "📘 New Training Module Available";
+      const message = `
+        A new module has been created: <strong>${module.title}</strong>.<br><br>
+        ${module.description || "No description provided."}<br><br>
+        Please log in to your account to view and start the module.
+      `;
 
-      // const emailPromises = emails.map((user) =>
-      //   emailService
-      //     .sendNotification(user.email, subject, message)
-      //     .catch((err) =>
-      //       logInfo(`Failed to send email to ${user.email}: ${err.message}`)
-      //     )
-      // );
-      // await Promise.all(emailPromises);
+      const emailPromises = emails.map((user) =>
+        emailService
+          .sendNotification(user.email, subject, message)
+          .catch((err) =>
+            logInfo(`Failed to send email to ${user.email}: ${err.message}`)
+          )
+      );
+      await Promise.all(emailPromises);
+    }
 
 
       /**
@@ -163,8 +164,6 @@ createModule: async (title, category, created_by) => {
       //     </div>
       //   `,
       // });
-      
-    // }
 
     await transaction.commit();
 
